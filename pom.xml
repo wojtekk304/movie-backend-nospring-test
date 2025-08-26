@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Maven Project Object Model (POM)
+  - Defines how your project is built (compiler version, plugins, packaging).
+  - This POM compiles Java 21 code and produces a single runnable JAR (uber-jar)
+    that Railway can start with `java -jar ...`.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <!-- POM model version (always 4.0.0 for modern Maven) -->
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Coordinates that uniquely identify your artifact in a repository -->
+    <groupId>com.movie</groupId>         <!-- Your org / reverse domain -->
+    <artifactId>test_api</artifactId>    <!-- Project/module name -->
+    <version>1.0-SNAPSHOT</version>      <!-- Version; SNAPSHOT = “under development” -->
+
+    <!-- We're producing a JAR file (the default), explicitly set for clarity -->
+    <packaging>jar</packaging>
+
+    <properties>
+        <!-- Java language level for compilation -->
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+
+        <!-- Make sure all tools use UTF-8 when reading/writing text -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!--
+          The fully qualified name of your main class (the one with public static void main).
+          If your class is in NO PACKAGE: use HelloMoviesServer
+          If your class is in package com.movie: use com.movie.HelloMoviesServer
+        -->
+        <main.class>HelloMoviesServer</main.class>
+        <!-- <main.class>com.movie.HelloMoviesServer</main.class> -->
+    </properties>
+
+    <build>
+        <plugins>
+            <!--
+              Compiler plugin:
+              - Tells Maven which Java version to use (21) when compiling.
+              - Version 3.13.0 is a stable, modern compiler plugin release.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <!-- No extra config needed since we set source/target in <properties> -->
+            </plugin>
+
+            <!--
+              Shade plugin:
+              - Creates an "uber JAR" that includes your classes + all dependency classes.
+              - This makes deployment trivial: one file to run with `java -jar`.
+              - Also writes a MANIFEST.MF with the Main-Class so Java knows where to start.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.3</version>
+
+                <executions>
+                    <execution>
+                        <!-- Bind shading to the 'package' phase (runs when you do `mvn package`) -->
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+
+                        <configuration>
+                            <!--
+                              Avoids generating a dependency-reduced POM (can confuse simple setups).
+                              Keeping it false is fine for most apps.
+                            -->
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+
+                            <!--
+                              Writes the Main-Class attribute into the JAR's MANIFEST.MF
+                              so `java -jar target/your-jar.jar` knows which class to run.
+                            -->
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <!-- Use the property we set above for flexibility -->
+                                    <mainClass>${main.class}</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <!--
+      <dependencies>...</dependencies>
+      If you add libraries in the future (e.g., JSON, JDBC drivers),
+      declare them here. Shade will bundle them into the final JAR.
+    -->
+
+</project>
